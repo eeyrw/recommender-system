@@ -14,19 +14,19 @@
 \usepackage[table,xcdraw]{xcolor}
 \usepackage{float}
 %\usepackage[left=3.0cm, right=3.0cm, top=3.5cm, bottom=2.70cm]{geometry}
-\title{用户的协同过滤算法的实验}
+\title{协同过滤算法实验}
 \author{Yuan}
 \date{\small\today}
 \begin{document}
 
 \maketitle
 \begin{abstract}
-本文参考论文xxx中的关于User Based Collaborative Filtering的方法对基于用户相似度的协同过滤的算法进行了实现，并使用MovieLens和豆瓣电影评分数据集进行了实验。
+本文参考文献\Autocite{Herlocker:1999:AFP:312624.312682}中的关于User Based Collaborative Filtering的方法对基于用户相似度的协同过滤的算法进行了实现，并使用MovieLens\Autocite{moivelens1m_dataset}和豆瓣电影评分数据集\Autocite{douban_dataset}进行了实验。
 \end{abstract}	
 \section{背景介绍}
 协同过滤（Collaborative Filtering）作为推荐算法中最经典的类型，其模型一般为m个物品，n个用户的数据，只有部分用户和部分数据之间是有评分数据的，其它部分评分是空白，此时我们要用已有的部分稀疏数据来预测那些空白的物品和数据之间的评分关系，找到最高评分的物品推荐给用户。
 
-一般来说，协同过滤推荐分为基于用户(user-based)的协同过滤和基于项目(item-based)的协同过滤，本文实现的是基于用户协同过滤的算法。基于用户(user-based)的协同过滤主要考虑的是用户和用户之间的相似度，只要找出相似用户喜欢的物品，并预测目标用户对对应物品的评分，就可以找到评分最高的若干个物品推荐给用户。而基于项目(item-based)的协同过滤和基于用户的协同过滤类似，只不过这时我们转向找到物品和物品之间的相似度，只有找到了目标用户对某些物品的评分，那么我们就可以对相似度高的类似物品进行预测，将评分最高的若干个相似物品推荐给用户。例如用户在网上买了一本统计学相关的书，网站马上会推荐一堆统计学，随机过程相关的书给用户，这就用到了基于项目的协同过滤思想。
+一般来说，协同过滤推荐分为基于用户(user-based)的协同过滤和基于项目(item-based)的协同过滤，本文实现的是基于用户协同过滤的算法。基于用户(user-based)的协同过滤主要考虑的是用户和用户之间的相似度，只要找出相似用户喜欢的物品，并预测目标用户对对应物品的评分，就可以找到评分最高的若干个物品推荐给用户\Autocite{推荐系统实践}。而基于项目(item-based)的协同过滤和基于用户的协同过滤类似，只不过这时我们转向找到物品和物品之间的相似度，只有找到了目标用户对某些物品的评分，那么我们就可以对相似度高的类似物品进行预测，将评分最高的若干个相似物品推荐给用户。例如用户在网上买了一本统计学相关的书，网站马上会推荐一堆统计学，随机过程相关的书给用户，这就用到了基于项目的协同过滤思想。
 
 \section{实验}
 \subsection{实验所用数据集说明}
@@ -37,7 +37,7 @@
 	\centering
 	\begin{tabular}{@{}llll@{}}
 		\toprule
-		数据集名称        & 评论样本数   & 电影总数  & 用户总数  \\ \midrule
+		数据集名称        & 评分样本数   & 电影总数  & 用户总数  \\ \midrule
 		MoiveLens-1M & 1000209 & 3664  & 12080 \\
 		豆瓣电影评分数据集    & 199813  & 22979 & 26237 \\ \bottomrule
 	\end{tabular}
@@ -45,121 +45,49 @@
 \label{table:dataset}
 \end{table}
 其中豆瓣电影评分数据集源自热心网友使用爬虫爬取豆瓣网并整理而得，MoiveLens-1M数据集为祖传数据集。豆瓣数据集较MoiveLens-1M数据集更为稀疏，能更好的验证用户相似度计算这一方法对于稀疏度无能为力的特性。
+
+
 \subsection{实验方案}
-实验基于用户相似度进行推荐的算法开展，使用Python3编写相关代码。整体流程如下：
+由于评估性能的需要，数据集会被分割为测试集及训练集。这里采用训练样本集以0.7的概率被选中，测试集以0.3的概率被选中的方法随机从样本集合里抽取，并且采用不放回的方式抽取。实验基于用户相似度进行推荐的算法开展，使用Python3编写相关代码。
+核心推荐系统的整体运作流程如下：
 \begin{enumerate}
 	\item 读入数据集样本，按照一定比例随机将数据集分为训练集和测试集。
 	\item 分别得到对应集合的\{用户：\{电影1:评分，电影2：评分，$\cdots$\}\}的字典。
 	\item 构建\{电影：[用户1，用户2，$\cdots$]\}的倒排字典。
 	\item 使用倒排字典构建用户相关字典\{用户：\{相似用户1：同时评论的电影数目，相似用户2：同时评论的电影数目，$\cdots$\}\}。
-	
-	
-	
+	\item 使用用户相关字典计算用户余弦相似度并记录到用户相似度矩阵。
+	\item 使用相似度矩阵对待推荐用户的周围K个相似用户推荐N部电影。
+		
 \end{enumerate}
 
 
-
-\subsection{模型定义}
-对于拼音序列转汉字问题的的HMM相关定义如下：
-
-
-所有的汉字组成集合Q（状态集合)，所有汉字对应的拼音的集合V（观测集合），其中$ |Q|=N, |V|=M $。
-\[ Q=\{ \mbox{汉字}_1,\mbox{汉字}_2,\cdots,\mbox{汉字}_N \},V=\{ \mbox{拼音}_1,\mbox{拼音}_2,\cdots,\mbox{拼音}_M \}  \]
-
-用户预期输入的汉字序列I（状态序列），用户实际输入的拼音序列O（观测序列），其中$ |I|=|O|=T $。
-\[ I=\{ \mbox{预期汉字}_1,\mbox{预期汉字}_2,\cdots,\mbox{预期汉字}_T \}	\]
-\[O=\{ \mbox{输入拼音}_1,\mbox{输入拼音}_2,\cdots,\mbox{输入拼音}_T \}  \]
-
-句子中前后汉字转移概率矩阵$\bm{A}$：
-\[ \bm{A}=[a_{ij}]_{N\times N} \]
-其中，
-\[ a_{ij}=P(i_{t+1}=\mbox{汉字}_j|i_t=\mbox{汉字}_i),  i=1,2,3,\cdots,N; j=1,2,\cdots,N\]
-是在句子中第$ t $个$ \mbox{汉字}_i $转移到第$ t+1 $个$ \mbox{汉字}_j $的概率。
-
-句子中前后汉字转移概率矩阵$\bm{B}$：
-\[ \bm{B}=[b_j(k)]_{N\times M} \]
-其中，
-\[ b_j(k)=P(\mbox{第t个输入的拼音}=\mbox{拼音}_k|\mbox{第t个想要输入的汉字}=\mbox{汉字}_j) \]
-\[ k=1,2,3,\cdots,M; j=1,2,\cdots,N\]
-是在句子中第$ t $个$ \mbox{汉字}_j $生成$ \mbox{拼音}_k $的概率。
-
-句子中首个汉字出现可能性的概率向量$\bm{\pi}$：
-\[ \bm{\pi}=(\pi_i) \]
-其中，
-\[ \pi_i=P(\mbox{句首汉字}=\mbox{汉字}_i), i=1,2,\cdots,N \]
-是句首汉字为$\mbox{汉字}_i$的概率。
-\subsection{模型训练（参数估计）}
-HMM的训练可以采用监督学习或者无监督学习\cite{李航统计学习}，本应用的状态和观测为汉字和拼音。将汉字转化为拼音可以自动开展\cite{python-pinyin}，并有相当高的准确度\cite{accuracy-of-auto-pinyin}。故可以通过中文语料库生成用于监督学习的训练集。
-本应用中HMM的三元组$ \lambda=(\bm{A},\bm{B},\bm{\pi}) $的估计方法如下：
-\paragraph{前后汉字转移概率$a_{ij}$的估计}
-设句子中第$ t $个$\mbox{汉字}_i$转移到第$ t+1 $个的$\mbox{汉字}_j$的频数为$A_{ij}$，状态转移概率$a_{ij}$的估计是：
-\[ \hat{a}_{i j}=\frac{A_{ij}}{\sum_{j=1}^{N} A_{i j}}, \quad i=1,2, \cdots, N ; j=1,2, \cdots, N \]
-\paragraph{汉字转拼音的概率$b_j(k)$的估计}
-设句子中$\mbox{汉字}_j$被观测为$\mbox{拼音}_k$的频数是$B_{j k}$，那么$\mbox{汉字}_j$观测为$\mbox{拼音}_k$的概率$b_{j}(k)$的估计是：
-\[ \hat{b}_{j}(k)=\frac{B_{j k}}{\sum_{k=1}^{M} B_{j k}}, \quad j=1,2, \cdots, N ; k=1,2, \cdots, M \]
-\paragraph{句首汉字出现概率$\pi_i$的估计}
-初始状态概率$\pi_i$的估计$\hat{\pi}_i$为S个句子样本中句首汉字为$\mbox{汉字}_i$的频率。
-
-
-\section{实验}
-\subsection{数据集来源及处理}
-参数估计使用的语料源自搜狗实验室提供的搜狐往年的新闻数据集\cite{SogouCS}。原始的数据集非常庞大，通过清洗整理后得到如表\ref{table:dataset-stat}所述的数据集，其中的最大值、最小值、均值及方差是基于句子长度统计的；图\ref{fig:datasethistogram}给出了具体的句子长度频率分布，可以发现大部分样本的长度集中在30以内。这些数据集的句子同时使用文字转拼音的自动化程序\cite{python-pinyin}产生对应的拼音。训练集和测试集选自原数据集的不同位置，没有交集。
-\bigskip
-\begin{figure}[H]
-	
-	%\centering
-	%\includegraphics[width=1\linewidth]{DataSetHistogram}
-	%\caption{数据集句子长度分布}
-	%\label{fig:datasethistogram}
-\end{figure}
-\bigskip
+实验评估采用准确率、召回率及覆盖度这三个评价指标。定义如下：
+\[ \mbox{准确率}=\frac{\sum_{u \in U}|R(u) \bigcap T(u)|}{\sum_{u \in U}|R(u)|} \]
+\[ \mbox{召回率}=\frac{\sum_{u \in U}|R(u) \bigcap T(u)|}{\sum_{u \in U}|T(u)|} \]
+\[ \mbox{覆盖度}=\frac{\left|\bigcup_{u \in U} R(u)\right|}{|I|} \]
+其中$U$为用户集合，$R(u)$为根据用户在训练集上的行为给出的用户做出的推荐列表，$T(u)$为用户在测试集上的行为列表。$I$为所有电影的集合。
+\subsection{实验结果}
+在两个不同数据集的实验结果如下表所示：
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
 \begin{table}[H]
-	\centering
-\begin{tabular}{cccccc}
-	\toprule  %添加表格头部粗线
-	数据集 & 样本数 & 最大值 & 最小值& 均值& 标准差\\
-	\midrule  %添加表格中横线
-		训练集 & 8000000       & 159 & 2&8.91 & 6.09\\
-测试集 & 100000 & 64 & 2 & 8.65 & 6.06\\
-	\bottomrule %添加表格底部粗线
-\end{tabular}
-\caption{实验数据集统计信息}
-\label{table:dataset-stat}
-\end{table}
-\clearpage
-\subsection{实验流程及结果}
-实验先使用训练集对HMM的参数进行估计，再使用测试集的数据进行测试，即使用测试集的拼音序列作为输入，用HMM给出预测的汉字序列并和测试集对应的序列做比较。比较时所用的量化评价指标定义为：
-\bigskip
-\[ \mbox{错误率}=\frac{\mbox{测试序列和预测序列对应位置元素不同的个数}}{\mbox{序列长度}} \times 100\% \]
-
-\bigskip
-
-实验结果如表\ref{table:experiment-result}所示，结果根据不同长度的句子的结果进行了分组。分组结合样本句子长度的分布以及实际应用综合考虑。分析数据可知句子长度小于10时的平均错误率在30\%上下，是一个较好的结果。考虑到输入法的日常应用场景，即低于十个汉字的输入是最频繁的，故该结果对实际应用有参考价值。当句子长度大于10以后错误率也并未提高很多，这得益于选用的数据集数据量较大，即便是本来分布就比较少的长句子也能有足够的样本进行训练。
-表\ref{table:prediction-samples}给出了从实验结果中随机抽取的序列，整体表现令人满意。
-\bigskip
-\bigskip
-
-\begin{table}[H]
-	\centering
-	\begin{tabular}{@{}ll@{}}
+		\centering
+	\begin{tabular}{@{}llll@{}}
 		\toprule
-		句子长度 & 平均错误率 \\ \midrule
-		任意长度 & 29.7\% \\
-		\textless{}=5 & 22.4\% \\
-		\textgreater{}5 且 \textless{}=10 & 31.0\% \\
-		\textless{}11 且 \textless{}=20 & 36.2\% \\
-		\textgreater{}20 & 42.6\% \\ \bottomrule
+		数据集          & 准确率    & 召回率    & 覆盖度    \\ \midrule
+		豆瓣电影评分数据集    & 0.0001 & 0.0003 & 0.7929 \\
+		MoiveLens-1M & 0.3756 & 0.0758 & 0.3204 \\ \bottomrule
 	\end{tabular}
 	\caption{实验结果}
-	\label{table:experiment-result}
+\label{table:exp_result}
 \end{table}
+从结果可以发现豆瓣电影评分数据集的准确率和召回率都出奇的低，这是数据集过于稀疏所致。因此这也印证了利用相似度计算的推荐系统无法解决稀疏性问题。但是就覆盖度而言在豆瓣数据集上表现得更好，因为豆瓣数据集的电影数相比MovieLens的多，而且几乎和用户数量一样多。
 
 
 
 
-
-\section{总结及展望}
-本文使用了HMM建模了拼音序列转汉字序列的标注问题，给出了具体的实验方案并开展了实验，在序列长度小于10的情况下得到近30\%错误率的性能，具有较高的实用价值。值得注意的是模型还有很大的改进空间，例如HMM的状态序列可以用二阶马尔科夫链描述，相对于只考虑前后关系的一阶马尔科夫链会有更好的表现。
+\section{总结}
+实验选择了两组不同的数据集，都使用基于用户的协同过滤算法进行验证。得到了不同结果，验证了使用用户相似度计算的协同过滤算法的缺陷。
 
 
 \printbibliography[heading=bibliography,title=参考文献]
