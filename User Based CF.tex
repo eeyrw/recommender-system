@@ -30,9 +30,35 @@
 
 \section{实验}
 \subsection{实验所用数据集说明}
-实验分别使用MoiveLens-1M数据集以及豆瓣电影评分数据集。
+实验分别使用MoiveLens-1M数据集以及豆瓣电影评分数据集。数据集的统计信息如下所述：
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}llll@{}}
+		\toprule
+		数据集名称        & 评论样本数   & 电影总数  & 用户总数  \\ \midrule
+		MoiveLens-1M & 1000209 & 3664  & 12080 \\
+		豆瓣电影评分数据集    & 199813  & 22979 & 26237 \\ \bottomrule
+	\end{tabular}
+	\caption{数据集统计信息}
+\label{table:dataset}
+\end{table}
+其中豆瓣电影评分数据集源自热心网友使用爬虫爬取豆瓣网并整理而得，MoiveLens-1M数据集为祖传数据集。豆瓣数据集较MoiveLens-1M数据集更为稀疏，能更好的验证用户相似度计算这一方法对于稀疏度无能为力的特性。
 \subsection{实验方案}
-在拼音序列转句子的问题中句子被视为序列，即认为每个时刻对应一个汉字，汉字又对应拼音。由于用户在输入法中输入的是拼音序列，所以拼音序列被定义为观测序列。而句子则为生成观测序列的状态序列。要解决通过观测序列得到最有可能的状态序列实质是求解一个最大路径问题，Viterbi算法\cite{viterbi2006a}被用于解决该问题。
+实验基于用户相似度进行推荐的算法开展，使用Python3编写相关代码。整体流程如下：
+\begin{enumerate}
+	\item 读入数据集样本，按照一定比例随机将数据集分为训练集和测试集。
+	\item 分别得到对应集合的\{用户：\{电影1:评分，电影2：评分，$\cdots$\}\}的字典。
+	\item 构建\{电影：[用户1，用户2，$\cdots$]\}的倒排字典。
+	\item 使用倒排字典构建用户相关字典\{用户：\{相似用户1：同时评论的电影数目，相似用户2：同时评论的电影数目，$\cdots$\}\}。
+	
+	
+	
+\end{enumerate}
+
+
+
 \subsection{模型定义}
 对于拼音序列转汉字问题的的HMM相关定义如下：
 
@@ -130,21 +156,7 @@ HMM的训练可以采用监督学习或者无监督学习\cite{李航统计学�
 
 
 
-\clearpage
-\begin{table}[H]
-	\centering
-	\begin{tabular}{@{}ll@{}}
-		\toprule
-		句子长度                              & 样例                                                                                                                                                                                                                                                          \\ \midrule
-		\textless{}=5                     & \begin{tabular}[c]{@{}l@{}}真值：他山之石\\ 预测：他山之时\\真值：政策热\\ 预测：政策热\\真值：还差\\ 预测：还差\end{tabular}                                                                                                                                                           \\ \midrule
-		\textgreater{}5 且 \textless{}=10  & \begin{tabular}[c]{@{}l@{}}真值：经顺义法院调解\\ 预测：景顺义法院调解\\真值：自然难免网民说三道四\\ 预测：自然难免网民说三道四\\真值：餐饮的准入条件和标准\\ 预测：餐饮的准入条件和标准\end{tabular}                                                                                                                       \\ \midrule
-		\textgreater{}10 且 \textless{}=20 & \begin{tabular}[c]{@{}l@{}}真值：希望可以在我骑行的途中\\ 预测：希望可以在我其行的土重\\真值：这架飞机遭击中时处于国际空域\\ 预测：折价飞机遭击中石出于国际控预\\真值：但民营企业中的大型企业只有\\ 预测：但民营企业中的大型企业之忧\end{tabular}                                                                                                 \\ \midrule
-		\textgreater{}20                  & \begin{tabular}[c]{@{}l@{}}真值：所以出国语言类考试的辅导课程也要及时开始涉及\\ 预测：所以出国与研类考试的服到可乘也要集市开始设计\\真值：这种作风也使贾康在公共财政和基层财政改革等方\\             面颇有建树\\ 预测：这种做风也是加抗灾工工采政和技层采政改革等方\\             面破有建树\\真值：地区争端多发和国际恐怖主义横行等多种内外危机\\ 预测：地区政短多发和国际控不住一横行等多种内外围及\end{tabular} \\ \bottomrule
-	\end{tabular}
-	\caption{预测及真值样例}
-	\label{table:prediction-samples}
-\end{table}
-\clearpage
+
 
 \section{总结及展望}
 本文使用了HMM建模了拼音序列转汉字序列的标注问题，给出了具体的实验方案并开展了实验，在序列长度小于10的情况下得到近30\%错误率的性能，具有较高的实用价值。值得注意的是模型还有很大的改进空间，例如HMM的状态序列可以用二阶马尔科夫链描述，相对于只考虑前后关系的一阶马尔科夫链会有更好的表现。
