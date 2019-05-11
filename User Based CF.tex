@@ -21,7 +21,7 @@
 
 \maketitle
 \begin{abstract}
-本文参考文献\Autocite{Herlocker:1999:AFP:312624.312682}中的关于User Based Collaborative Filtering的方法对基于用户相似度的协同过滤的算法进行了实现，并使用MovieLens\Autocite{moivelens1m_dataset}和豆瓣电影评分数据集\Autocite{douban_dataset}进行了实验。
+本文参考文献\Autocite{Herlocker:1999:AFP:312624.312682}中的关于User Based Collaborative Filtering的方法对基于用户相似度的协同过滤的算法进行了实现，并使用MovieLens\Autocite{moivelens1m_dataset}和豆瓣电影评分数据集\Autocite{douban_dataset}进行了实验。文章将从实验的背景介绍、实验数据集来源、实验方案、实验结果和分析这几个方面展开。
 \end{abstract}	
 \section{背景介绍}
 协同过滤（Collaborative Filtering）作为推荐算法中最经典的类型，其模型一般为m个物品，n个用户的数据，只有部分用户和部分数据之间是有评分数据的，其它部分评分是空白，此时我们要用已有的部分稀疏数据来预测那些空白的物品和数据之间的评分关系，找到最高评分的物品推荐给用户。
@@ -81,7 +81,7 @@
 	\caption{实验结果}
 \label{table:exp_result}
 \end{table}
-从结果可以发现豆瓣电影评分数据集的准确率和召回率都出奇的低，这是数据集过于稀疏所致。因此这也印证了利用相似度计算的推荐系统无法解决稀疏性问题。但是就覆盖度而言在豆瓣数据集上表现得更好，因为豆瓣数据集的电影数相比MovieLens的多，而且几乎和用户数量一样多。
+从结果可以发现豆瓣电影评分数据集的准确率和召回率都出奇的低，这是数据集过于稀疏所致。因此这也印证了利用相似度计算的推荐系统无法解决稀疏性问题。在MoiveLens-1M这样不是那么稀疏的数据集上能有近30\%的准确率，效果也并不是很理想。但是就覆盖度而言在豆瓣数据集上表现得更好，因为豆瓣数据集的电影数相比MovieLens的多，而且几乎和用户数量一样多。
 
 
 
